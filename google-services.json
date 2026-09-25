@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "449275884989",
+    "project_id": "ringfnder",
+    "storage_bucket": "ringfnder.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449275884989:android:5087b8e7780a8cd5768ed4",
+        "android_client_info": {
+          "package_name": "com.example.ringfinder_1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "449275884989-lp3lqjvcifrlpjkleu2nukb8qksm30sv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ringfinder_1",
+            "certificate_hash": "812e9bdb8aa7813584a7814ee558b71254a91ea0"
+          }
+        },
+        {
+          "client_id": "449275884989-g4t567sv79rvas12eg7c7rj6h1bu9qog.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzksYj12zSz7uc9IHZ6vJkdiKLylqUnAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "449275884989-g4t567sv79rvas12eg7c7rj6h1bu9qog.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "449275884989-3m82avehmq12f2daa5onr6qnf64p3lr8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ringfinder1"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

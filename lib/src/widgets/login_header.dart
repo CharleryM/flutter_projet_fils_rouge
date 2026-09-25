@@ -36,11 +36,6 @@ class LoginHeader extends StatelessWidget {
             ),
           ),
         ),
-        const Icon(
-          Icons.lock_outline_rounded,
-          color: Color(0xFF7CE3FF),
-          size: 19,
-        ),
       ],
     );
   }

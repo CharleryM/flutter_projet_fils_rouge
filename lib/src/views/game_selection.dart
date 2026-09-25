@@ -1,10 +1,24 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/game.dart';
 import '../widgets/game_card.dart';
 import '../widgets/game_catalog_header.dart';
+import 'login.dart';
 
-class GameSelectionPage extends StatelessWidget {
+class GameSelectionPage extends StatefulWidget {
   const GameSelectionPage({super.key});
+
+  @override
+  State<GameSelectionPage> createState() => _GameSelectionPageState();
+}
+
+class _GameSelectionPageState extends State<GameSelectionPage> {
+  static const _allFilter = 'Tous';
+
+  final _searchController = TextEditingController();
+  final Set<String> _selectedGameIds = <String>{};
+  String _selectedFilter = _allFilter;
+  String _searchQuery = '';
 
   static const games = <Game>[
     Game(
@@ -50,6 +64,45 @@ class GameSelectionPage extends StatelessWidget {
   ];
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Game> get _visibleGames {
+    final query = _searchQuery.trim().toLowerCase();
+    return games.where((game) {
+      final matchesFilter = _selectedFilter == _allFilter || game.genre == _selectedFilter;
+      final matchesSearch = query.isEmpty ||
+          game.title.toLowerCase().contains(query) ||
+          game.genre.toLowerCase().contains(query) ||
+          game.tags.any((tag) => tag.toLowerCase().contains(query));
+      return matchesFilter && matchesSearch;
+    }).toList();
+  }
+
+  void _toggleGame(Game game) {
+    setState(() {
+      if (!_selectedGameIds.add(game.id)) {
+        _selectedGameIds.remove(game.id);
+      }
+    });
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+      (_) => false,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE9EEE8),
@@ -64,9 +117,9 @@ class GameSelectionPage extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  child: GameCatalogHeader(),
+                  child: GameCatalogHeader(onProfileTap: _signOut),
                 ),
                 Expanded(
                   child: ListView(
@@ -100,11 +153,22 @@ class GameSelectionPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const TextField(
-                        enabled: false,
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (value) => setState(() => _searchQuery = value),
                         decoration: InputDecoration(
                           hintText: 'Rechercher un jeu',
                           prefixIcon: Icon(Icons.search_rounded),
+                          suffixIcon: _searchQuery.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Effacer la recherche',
+                                  icon: const Icon(Icons.clear_rounded),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -118,15 +182,18 @@ class GameSelectionPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 7),
-                      const Wrap(
+                      Wrap(
                         spacing: 7,
                         runSpacing: 7,
-                        children: [
-                          _StaticFilter(label: 'Tous', selected: true),
-                          _StaticFilter(label: 'FPS compétitif'),
-                          _StaticFilter(label: 'RPG'),
-                          _StaticFilter(label: 'Open world'),
-                        ],
+                        children: [_allFilter, 'FPS compétitif', 'RPG', 'Open world']
+                            .map(
+                              (filter) => _GameFilter(
+                                label: filter,
+                                selected: _selectedFilter == filter,
+                                onSelected: () => setState(() => _selectedFilter = filter),
+                              ),
+                            )
+                            .toList(),
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -139,16 +206,39 @@ class GameSelectionPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 9),
-                      ...games.map(
+                      if (_visibleGames.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 28),
+                          child: Center(
+                            child: Text(
+                              'Aucun jeu trouvé',
+                              style: TextStyle(color: Color(0xFFB8C5D2)),
+                            ),
+                          ),
+                        ),
+                      ..._visibleGames.map(
                         (game) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: GameCard(
                             game: game,
-                            selected: false,
-                            onTap: () {},
+                            selected: _selectedGameIds.contains(game.id),
+                            onTap: () => _toggleGame(game),
                           ),
                         ),
                       ),
+                      if (_selectedGameIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${_selectedGameIds.length} jeu${_selectedGameIds.length > 1 ? 'x' : ''} sélectionné${_selectedGameIds.length > 1 ? 's' : ''}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF52E0EE),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -161,18 +251,19 @@ class GameSelectionPage extends StatelessWidget {
   }
 }
 
-class _StaticFilter extends StatelessWidget {
+class _GameFilter extends StatelessWidget {
   final String label;
   final bool selected;
+  final VoidCallback onSelected;
 
-  const _StaticFilter({required this.label, this.selected = false});
+  const _GameFilter({required this.label, required this.selected, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
     return ChoiceChip(
       label: Text(label),
       selected: selected,
-      onSelected: null,
+      onSelected: (_) => onSelected(),
       labelStyle: TextStyle(
         color: selected ? const Color(0xFF07141D) : const Color(0xFFB5C2D0),
         fontSize: 11,
@@ -181,6 +272,7 @@ class _StaticFilter extends StatelessWidget {
       backgroundColor: const Color(0xFF182432),
       selectedColor: const Color(0xFF52E0EE),
       side: BorderSide.none,
+      showCheckmark: false,
     );
   }
 }
