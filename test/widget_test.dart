@@ -31,11 +31,16 @@ void main() {
   testWidgets('permet de sélectionner et rechercher un jeu', (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: GameSelectionPage()));
 
-    await tester.tap(find.byType(GameCard).first);
+    final firstGameCard = find.byType(GameCard).first;
+    await tester.ensureVisible(firstGameCard);
+    await tester.tap(firstGameCard);
     await tester.pump();
     expect(find.text('1 jeu sélectionné'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField), 'Valorant');
+    await tester.drag(find.byType(ListView), const Offset(0, 500));
+    await tester.pump();
+    final searchField = find.byType(TextField);
+    await tester.enterText(searchField, 'Valorant');
     await tester.pump();
     expect(find.text('CS2 / Valorant'), findsOneWidget);
     expect(find.text('Cyberpunk 2077'), findsNothing);
