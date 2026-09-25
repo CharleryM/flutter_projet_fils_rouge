@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/game.dart';
 import '../widgets/game_card.dart';
 import '../widgets/game_catalog_header.dart';
+import 'login.dart';
 
 class GameSelectionPage extends StatefulWidget {
   const GameSelectionPage({super.key});
@@ -87,6 +89,19 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
     });
   }
 
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,9 +117,9 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
             ),
             child: Column(
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  child: GameCatalogHeader(),
+                  child: GameCatalogHeader(onProfileTap: _signOut),
                 ),
                 Expanded(
                   child: ListView(
