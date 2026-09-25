@@ -1,7 +1,17 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'firebase_options.dart';
 import 'src/app.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await GoogleSignIn.instance.initialize(
+    serverClientId: '449275884989-g4t567sv79rvas12eg7c7rj6h1bu9qog.apps.googleusercontent.com',
+  );
   runApp(const MyApp());
 }
 

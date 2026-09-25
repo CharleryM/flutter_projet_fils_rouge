@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class GameCatalogHeader extends StatelessWidget {
   const GameCatalogHeader({super.key});
 
+static const double logoSize = 52;
+  static const double logoContainerSize = logoSize + 16;
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -14,7 +16,12 @@ class GameCatalogHeader extends StatelessWidget {
             color: const Color(0xFF172332),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.memory_rounded, color: Color(0xFF57E6F2), size: 18),
+          child:Image.asset(
+            'assets/images/rigfinder_logo.png',
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(width: 10),
         const Expanded(

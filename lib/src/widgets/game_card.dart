@@ -29,6 +29,7 @@ class GameCard extends StatelessWidget {
             border: Border(left: BorderSide(color: selected ? const Color(0xFF52E0EE) : Colors.transparent, width: 3)),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
                 width: 72,
@@ -52,15 +53,21 @@ class GameCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(game.genre.toUpperCase(), style: const TextStyle(color: Color(0xFF52E0EE), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .6)),
-                  const SizedBox(height: 4),
-                  Text(game.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 3),
-                  Text(game.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFB3BFCC), fontSize: 10)),
-                  const Spacer(),
-                  Wrap(spacing: 5, children: game.tags.take(2).map((tag) => Text(tag, style: const TextStyle(color: Color(0xFF8DEEF6), fontSize: 8, fontWeight: FontWeight.w700))).toList()),
-                ]),
+                child: SizedBox(
+                  height: 92,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(game.genre.toUpperCase(), style: const TextStyle(color: Color(0xFF52E0EE), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .6)),
+                      const SizedBox(height: 4),
+                      Text(game.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 3),
+                      Text(game.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFB3BFCC), fontSize: 10)),
+                      const SizedBox(height: 8),
+                      Wrap(spacing: 5, children: game.tags.take(2).map((tag) => Text(tag, style: const TextStyle(color: Color(0xFF8DEEF6), fontSize: 8, fontWeight: FontWeight.w700))).toList()),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 6),
               AnimatedContainer(
