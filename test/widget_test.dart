@@ -5,21 +5,44 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:ringfinder_1/main.dart';
+import 'package:ringfinder_1/src/views/game_selection.dart';
+import 'package:ringfinder_1/src/widgets/game_card.dart';
 
 void main() {
-  testWidgets('affiche et valide la page de connexion', (WidgetTester tester) async {
+  testWidgets('affiche la page de connexion actuelle', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    expect(find.text('Bienvenue sur RigFinder'), findsOneWidget);
-    expect(find.text('Se connecter'), findsOneWidget);
+    expect(find.text('Connexion'), findsOneWidget);
+    expect(find.text('Connectez-vous à votre espace RigFinder.'), findsOneWidget);
+    expect(find.text('Continuer avec Google'), findsOneWidget);
+    expect(find.text('Continuer avec Apple'), findsOneWidget);
+  });
 
-    await tester.tap(find.text('Se connecter'));
+  testWidgets('affiche la page de sélection de jeux sans erreur de rendu', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: GameSelectionPage()));
+
+    expect(find.text('Quels sont tes jeux favoris ?'), findsOneWidget);
+    expect(find.text('Cyberpunk 2077'), findsOneWidget);
+  });
+
+  testWidgets('permet de sélectionner et rechercher un jeu', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: GameSelectionPage()));
+
+    final firstGameCard = find.byType(GameCard).first;
+    await tester.ensureVisible(firstGameCard);
+    await tester.tap(firstGameCard);
     await tester.pump();
+    expect(find.text('1 jeu sélectionné'), findsOneWidget);
 
-    expect(find.text('Saisissez votre adresse e-mail'), findsOneWidget);
-    expect(find.text('Utilisez au moins 6 caractères'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, 500));
+    await tester.pump();
+    final searchField = find.byType(TextField);
+    await tester.enterText(searchField, 'Valorant');
+    await tester.pump();
+    expect(find.text('CS2 / Valorant'), findsOneWidget);
+    expect(find.text('Cyberpunk 2077'), findsNothing);
   });
 }
