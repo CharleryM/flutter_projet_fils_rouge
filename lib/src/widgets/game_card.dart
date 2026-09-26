@@ -26,7 +26,12 @@ class GameCard extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(9),
-            border: Border(left: BorderSide(color: selected ? const Color(0xFF52E0EE) : Colors.transparent, width: 3)),
+            border: Border(
+              left: BorderSide(
+                color: selected ? const Color(0xFF52E0EE) : Colors.transparent,
+                width: 3,
+              ),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,21 +39,27 @@ class GameCard extends StatelessWidget {
               SizedBox(
                 width: 72,
                 height: 92,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: game.coverColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Center(
-                    child: Text(
-                      game.title.substring(0, 1),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: game.imageUrl == null
+                      ? const ColoredBox(
+                          color: Color(0xFF2D596B),
+                          child: Icon(
+                            Icons.sports_esports_rounded,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Image.network(
+                          game.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const ColoredBox(
+                            color: Color(0xFF2D596B),
+                            child: Icon(
+                              Icons.sports_esports_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -58,13 +69,38 @@ class GameCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(game.genre.toUpperCase(), style: const TextStyle(color: Color(0xFF52E0EE), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .6)),
+                      const Text(
+                        'JEU STEAM',
+                        style: TextStyle(
+                          color: Color(0xFF52E0EE),
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: .6,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(game.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       const SizedBox(height: 3),
-                      Text(game.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFB3BFCC), fontSize: 10)),
-                      const SizedBox(height: 8),
-                      Wrap(spacing: 5, children: game.tags.take(2).map((tag) => Text(tag, style: const TextStyle(color: Color(0xFF8DEEF6), fontSize: 8, fontWeight: FontWeight.w700))).toList()),
+                      Text(
+                        game.platforms.isEmpty
+                            ? 'Disponible sur Steam'
+                            : game.platforms.join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFB3BFCC),
+                          fontSize: 10,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -74,8 +110,19 @@ class GameCard extends StatelessWidget {
                 duration: const Duration(milliseconds: 160),
                 width: 24,
                 height: 24,
-                decoration: BoxDecoration(color: selected ? const Color(0xFF52E0EE) : const Color(0xFF252C36), borderRadius: BorderRadius.circular(5)),
-                child: selected ? const Icon(Icons.check_rounded, color: Color(0xFF07141D), size: 19) : null,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? const Color(0xFF52E0EE)
+                      : const Color(0xFF252C36),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: selected
+                    ? const Icon(
+                        Icons.check_rounded,
+                        color: Color(0xFF07141D),
+                        size: 19,
+                      )
+                    : null,
               ),
             ],
           ),

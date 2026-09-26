@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:iconoir_flutter/solid/google_circle.dart';
@@ -30,22 +31,59 @@ class _LoginPageState extends State<LoginPage> {
 
       if (mounted) {
         await Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => const GameSelectionPage(),
-          ),
+          MaterialPageRoute<void>(builder: (_) => const GameSelectionPage()),
         );
       }
     } on GoogleSignInException catch (error) {
       if (mounted) {
-        setState(() => _errorMessage = 'Connexion Google impossible : ${error.description ?? error.code.name}.');
+        setState(
+          () => _errorMessage =
+              'Connexion Google impossible : ${error.description ?? error.code.name}.',
+        );
       }
     } on FirebaseAuthException catch (error) {
       if (mounted) {
-        setState(() => _errorMessage = 'Connexion Firebase impossible : ${error.message ?? error.code}.');
+        setState(
+          () => _errorMessage =
+              'Connexion Firebase impossible : ${error.message ?? error.code}.',
+        );
       }
     } on Exception catch (error) {
       if (mounted) {
         setState(() => _errorMessage = 'Connexion impossible : $error');
+      }
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _errorMessage = null);
+
+    try {
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+
+      if (kIsWeb) {
+        await FirebaseAuth.instance.signInWithPopup(provider);
+      } else {
+        await FirebaseAuth.instance.signInWithProvider(provider);
+      }
+
+      if (mounted) {
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (_) => const GameSelectionPage()),
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) {
+        setState(
+          () => _errorMessage =
+              'Connexion Apple impossible : ${error.message ?? error.code}.',
+        );
+      }
+    } on Exception catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Connexion Apple impossible : $error');
       }
     }
   }
@@ -103,7 +141,10 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFFFF8D8D), fontSize: 12),
+                        style: const TextStyle(
+                          color: Color(0xFFFF8D8D),
+                          fontSize: 12,
+                        ),
                       ),
                     ],
 
@@ -115,9 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: Color(0xFF7CE3FF),
                         size: 22,
                       ),
-                      onPressed: () async {
-                        setState(() => _errorMessage = 'La connexion Apple sera ajoutée après la configuration Apple Sign-In.');
-                      },
+                      onPressed: _signInWithApple,
                     ),
                   ],
                 ),
