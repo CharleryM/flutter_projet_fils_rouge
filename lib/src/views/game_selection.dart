@@ -1,84 +1,96 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/game.dart';
+import '../services/steam_store_service.dart';
 import '../widgets/game_card.dart';
 import '../widgets/game_catalog_header.dart';
 import 'login.dart';
 
 class GameSelectionPage extends StatefulWidget {
-  const GameSelectionPage({super.key});
+  const GameSelectionPage({super.key, this.steamStoreService});
+
+  final SteamStoreService? steamStoreService;
 
   @override
   State<GameSelectionPage> createState() => _GameSelectionPageState();
 }
 
 class _GameSelectionPageState extends State<GameSelectionPage> {
-  static const _allFilter = 'Tous';
-
   final _searchController = TextEditingController();
   final Set<String> _selectedGameIds = <String>{};
-  String _selectedFilter = _allFilter;
+  late final SteamStoreService _steamStoreService;
+  late final bool _ownsSteamStoreService;
+  List<Game> _games = [];
   String _searchQuery = '';
+  bool _isLoading = false;
+  String? _errorMessage;
+  int _searchRequestId = 0;
+  Timer? _searchDebounceTimer;
 
-  static const games = <Game>[
-    Game(
-      id: 'cyberpunk-2077',
-      title: 'Cyberpunk 2077',
-      genre: 'RPG',
-      description: 'Ray tracing et VRAM lourde',
-      tags: ['RPG', 'DLSS 3.5'],
-      performance: 'Ultra',
-      hardware: 'GPU prioritaire',
-      coverColor: Color(0xFF164A65),
-    ),
-    Game(
-      id: 'cs2',
-      title: 'CS2 / Valorant',
-      genre: 'FPS compétitif',
-      description: 'Puissance CPU monocœur et faible latence',
-      tags: ['360 Hz ready', 'Low latency'],
-      performance: 'Compétitif',
-      hardware: 'CPU monocœur',
-      coverColor: Color(0xFF2D596B),
-    ),
-    Game(
-      id: 'gta-vi',
-      title: 'Grand Theft Auto VI',
-      genre: 'Open world',
-      description: 'Équilibre CPU et GPU multicœur',
-      tags: ['Next-gen', 'Prévu 2025'],
-      performance: 'Élevée',
-      hardware: '8 cœurs minimum',
-      coverColor: Color(0xFF6C3D6F),
-    ),
-    Game(
-      id: 'black-myth-wukong',
-      title: 'Black Myth: Wukong',
-      genre: 'Action RPG',
-      description: 'Forte charge GPU et shaders complexes',
-      tags: ['Unreal Engine 5', 'Ray tracing'],
-      performance: 'Très élevée',
-      hardware: 'VRAM 12 Go+',
-      coverColor: Color(0xFF624232),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _ownsSteamStoreService = widget.steamStoreService == null;
+    _steamStoreService = widget.steamStoreService ?? SteamStoreService();
+  }
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     _searchController.dispose();
+    if (_ownsSteamStoreService) {
+      _steamStoreService.dispose();
+    }
     super.dispose();
   }
 
-  List<Game> get _visibleGames {
-    final query = _searchQuery.trim().toLowerCase();
-    return games.where((game) {
-      final matchesFilter = _selectedFilter == _allFilter || game.genre == _selectedFilter;
-      final matchesSearch = query.isEmpty ||
-          game.title.toLowerCase().contains(query) ||
-          game.genre.toLowerCase().contains(query) ||
-          game.tags.any((tag) => tag.toLowerCase().contains(query));
-      return matchesFilter && matchesSearch;
-    }).toList();
+  void _onSearchChanged(String value) {
+    final query = value.trim();
+    final requestId = ++_searchRequestId;
+    _searchDebounceTimer?.cancel();
+
+    if (query.length < 2) {
+      setState(() {
+        _games = [];
+        _isLoading = false;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _games = [];
+      _isLoading = false;
+      _errorMessage = null;
+    });
+    _searchDebounceTimer = Timer(
+      const Duration(milliseconds: 350),
+      () => _searchGames(query, requestId),
+    );
+  }
+
+  Future<void> _searchGames(String query, int requestId) async {
+    if (!mounted || requestId != _searchRequestId) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final games = await _steamStoreService.searchGames(query);
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _games = games;
+        _isLoading = false;
+      });
+    } on Exception catch (error) {
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = error is SteamStoreException
+            ? error.message
+            : 'Impossible de contacter Steam. Vérifie ta connexion et réessaie.';
+      });
+    }
   }
 
   void _toggleGame(Game game) {
@@ -126,7 +138,7 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                     children: [
                       const Text(
-                        'ÉTAPE 1 • CATALOGUE DE JEUX',
+                        'CATALOGUE STEAM',
                         style: TextStyle(
                           color: Color(0xFF52E0EE),
                           fontSize: 9,
@@ -145,7 +157,7 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Sélectionne tes genres de prédilection et tes jeux cibles pour calibrer le matériel idéal.',
+                        'Recherche un jeu dans la boutique Steam et sélectionne ceux auxquels tu veux jouer.',
                         style: TextStyle(
                           color: Color(0xFFBBC7D3),
                           fontSize: 11,
@@ -155,7 +167,10 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: _searchController,
-                        onChanged: (value) => setState(() => _searchQuery = value),
+                        onChanged: (value) {
+                          setState(() => _searchQuery = value);
+                          _onSearchChanged(value);
+                        },
                         decoration: InputDecoration(
                           hintText: 'Rechercher un jeu',
                           prefixIcon: Icon(Icons.search_rounded),
@@ -167,37 +182,14 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _searchQuery = '');
+                                    _onSearchChanged('');
                                   },
                                 ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'GENRES & INTENSITÉ',
-                        style: TextStyle(
-                          color: Color(0xFFB8C5D2),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 7,
-                        runSpacing: 7,
-                        children: [_allFilter, 'FPS compétitif', 'RPG', 'Open world']
-                            .map(
-                              (filter) => _GameFilter(
-                                label: filter,
-                                selected: _selectedFilter == filter,
-                                onSelected: () => setState(() => _selectedFilter = filter),
-                              ),
-                            )
-                            .toList(),
-                      ),
                       const SizedBox(height: 20),
                       const Text(
-                        'TITRES POPULAIRES CALIBRÉS',
+                        'RÉSULTATS DE LA BOUTIQUE',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -206,7 +198,34 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                         ),
                       ),
                       const SizedBox(height: 9),
-                      if (_visibleGames.isEmpty)
+                      if (_isLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 28),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Color(0xFFFF8D8D)),
+                            ),
+                          ),
+                        )
+                      else if (_searchQuery.trim().length < 2)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 28),
+                          child: Center(
+                            child: Text(
+                              'Saisis au moins deux caractères pour rechercher dans Steam.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Color(0xFFB8C5D2)),
+                            ),
+                          ),
+                        )
+                      else if (_games.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 28),
                           child: Center(
@@ -216,7 +235,7 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
                             ),
                           ),
                         ),
-                      ..._visibleGames.map(
+                      ..._games.map(
                         (game) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: GameCard(
@@ -247,32 +266,6 @@ class _GameSelectionPageState extends State<GameSelectionPage> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _GameFilter extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onSelected;
-
-  const _GameFilter({required this.label, required this.selected, required this.onSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onSelected(),
-      labelStyle: TextStyle(
-        color: selected ? const Color(0xFF07141D) : const Color(0xFFB5C2D0),
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-      ),
-      backgroundColor: const Color(0xFF182432),
-      selectedColor: const Color(0xFF52E0EE),
-      side: BorderSide.none,
-      showCheckmark: false,
     );
   }
 }
