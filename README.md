@@ -15,7 +15,7 @@ La sélection des jeux est pour l'instant conservée en mémoire pendant l'utili
 
 ## Recherche Steam
 
-La recherche utilise le point d'accès de recherche de la boutique Steam (`store.steampowered.com/api/storesearch/`). Elle envoie le texte saisi et récupère des résultats avec leur identifiant Steam, leur nom, leur vignette et, si disponible, les plateformes compatibles. La recherche est déclenchée après la saisie d'au moins deux caractères.
+La recherche utilise le point d'accès de recherche de la boutique Steam (`store.steampowered.com/api/storesearch/`). Elle envoie le texte saisi et récupère des résultats avec leur identifiant Steam, leur nom, leur vignette et, si disponible, les plateformes compatibles. Il faut saisir au moins deux caractères; la requête part après une pause de 350 ms. L'application affiche un indicateur de chargement pendant la requête et un message si Steam ne répond pas correctement.
 
 Cet endpoint renvoie des résultats de recherche, pas un export exhaustif de tout le catalogue Steam. Il ne fournit pas non plus de spécifications PC minimales vérifiées. Ces données devront venir d'une autre source ou d'un référentiel maintenu par le projet pour permettre la comparaison matérielle envisagée.
 
@@ -23,7 +23,7 @@ L'application appelle Steam directement sur les plateformes natives. La politiqu
 
 ## Connexion et configuration Firebase
 
-Le projet utilise Firebase Core pour l'initialisation et Firebase Authentication pour la gestion de session. Google Sign-In utilise le package `google_sign_in`. Apple utilise le fournisseur Apple de Firebase, avec une fenêtre OAuth sur le Web et le flux natif sur les autres plateformes.
+Le projet utilise Firebase Core pour l'initialisation et Firebase Authentication pour la gestion de session. Google Sign-In utilise le package `google_sign_in`. Apple utilise le fournisseur Apple de Firebase, avec une fenêtre OAuth sur le Web et le flux natif sur les plateformes prises en charge par Firebase Auth.
 
 Avant d'utiliser les boutons de connexion :
 
@@ -76,7 +76,3 @@ flutter run -d <identifiant_appareil>
 ```
 
 Les options Firebase présentes couvrent Android, iOS, macOS, Windows et le Web. Linux n'est pas configuré dans `firebase_options.dart`. Pour Flutter Web, la connexion Apple peut fonctionner si le domaine est autorisé dans Firebase et dans la configuration Apple; la recherche Steam directe reste bloquée par CORS.
-
-## État des tests
-
-Le dossier `test/` est exclu du suivi Git par `.gitignore`. Aucun test n'est requis pour lancer l'application.
